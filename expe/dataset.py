@@ -2,43 +2,79 @@ from __future__ import print_function, division
 import os
 import torch
 import pandas as pd
-from PIL import Image
 import numpy as np
+from PIL import Image
 import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
+from torch.utils.data import Dataset
+from torchvision import transforms
 
-class CustomDataset(Dataset):
+# Ignore warnings
+import warnings
+warnings.filterwarnings("ignore")
 
-    def __init__(self, data_file, root_dir, transform=None):
+class YCBDataset(Dataset):
+    """Custom dataset containing YCB data"""
+
+    def __init__(self, data_file, root_dir):
         """
         Arguments:
-            data_file (string): Path to the file containing the name of the images to process
+            data_file (string): Path to the csv file with annotations.
             root_dir (string): Directory with all the images.
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.image_names = []
 
+        self.img_names = []
         with open(data_file, "r") as f:
             for line in f.readlines():
-                self.image_names.append(str(line.strip())+".png")
+                self.img_names.append(str(line).strip()+"-color.png")
         self.root_dir = root_dir
-        if transform:
-            self.transform = transform
-        else: 
-            self.transform = transforms.Compose([transforms.ToTensor()])
-
+        self.transform = transforms.Compose([transforms.ToTensor()]) 
 
     def __len__(self):
-        return len(self.image_names)
+        return len(self.img_names)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
         img_name = os.path.join(self.root_dir,
-                                self.image_names[idx])
+                                self.img_names[idx])
+        image = Image.open(img_name)
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image
+    
+class ARMDataset(Dataset):
+    """Custom dataset containing ARM data"""
+
+    def __init__(self, data_file, root_dir):
+        """
+        Arguments:
+            data_file (string): Path to the csv file with annotations.
+            root_dir (string): Directory with all the images.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+
+        self.img_names = []
+        with open(data_file, "r") as f:
+            for line in f.readlines():
+                self.img_names.append(str(line).strip()+"-color.png")
+        self.root_dir = root_dir
+        self.transform = transforms.Compose([transforms.ToTensor()]) 
+
+    def __len__(self):
+        return len(self.img_names)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_name = os.path.join(self.root_dir,
+                                self.img_names[idx])
         image = Image.open(img_name)
 
         if self.transform:
